@@ -1,6 +1,7 @@
 # covid
 --- 
-
+![demo](./assets/demo.gif)
+---
 ## Stack:
 - Frontend: Create-React-App
 - Backend: Flask, Gunicorn
