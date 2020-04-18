@@ -17,7 +17,7 @@ export default function Stats({ country }) {
   const [error, setError] = useState();
   useEffect(() => {
     const fetchData = async () => {
-      await fetch(`/stats/${country}`, {
+      await fetch(`/api/stats/${country}`, {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",

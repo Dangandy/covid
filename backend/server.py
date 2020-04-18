@@ -5,12 +5,11 @@ import pandas as pd
 
 # start server
 app = Flask(__name__)
-app.config["DEBUG"] = True
 model = pickle.load(open("model.pkl", "rb"))
 df = pd.read_csv("df.csv")
 
 
-@app.route("/predict/<country>")
+@app.route("/api/predict/<country>")
 def predict(country):
     """
     predicts the countrys confirmed cases tomorrow.. country must be capital ☹️
@@ -41,7 +40,7 @@ def predict(country):
     return {"results": results}, 200
 
 
-@app.route("/plot/<country>")
+@app.route("/api/plot/<country>")
 def plot(country):
     """
     pulls all the date and confirmed from the df and return the data for that specific country
@@ -55,7 +54,7 @@ def plot(country):
     return {"results": array}, 200
 
 
-@app.route("/stats/<country>")
+@app.route("/api/stats/<country>")
 def stats(country):
     """
     grab the total confirmed, deaths, and recovered cases for the country
@@ -74,7 +73,7 @@ def stats(country):
     )
 
 
-@app.route("/stats/World")
+@app.route("/api/stats/World")
 def worldStats():
     """
     get sum of all stats

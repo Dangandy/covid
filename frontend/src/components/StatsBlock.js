@@ -46,7 +46,7 @@ export default function StatsBlock({ type, cur, prev }) {
   // return
   return (
     <Block blockColor={direction}>
-      <span>{type}: &nbsp;</span>
+      <span>{`${type}: `}</span>
       <Flash>{cur}</Flash>
     </Block>
   );

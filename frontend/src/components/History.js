@@ -11,7 +11,7 @@ export default function History({ country }) {
   useEffect(() => {
     async function fetchHistory() {
       console.log("fetching history");
-      await fetch(`/plot/${country}`, {
+      await fetch(`/api/plot/${country}`, {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
@@ -29,7 +29,7 @@ export default function History({ country }) {
   useEffect(() => {
     async function fetchHistory() {
       console.log("fetching prediction");
-      await fetch(`/predict/${country}`, {
+      await fetch(`/api/predict/${country}`, {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
