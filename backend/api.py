@@ -5,6 +5,7 @@ import pandas as pd
 
 # start server
 app = Flask(__name__)
+app.debug = True
 model = pickle.load(open("model.pkl", "rb"))
 df = pd.read_csv("df.csv")
 
@@ -54,6 +55,21 @@ def plot(country):
     return {"results": array}, 200
 
 
+@app.route("/api/stats/World")
+def worldStats():
+    """
+    get sum of all stats
+    """
+    return (
+        {
+            "confirmed": int(sum(df.confirmed_diff)),
+            "deaths": int(sum(df.deaths_diff)),
+            "recovered": int(sum(df.recovered_diff)),
+        },
+        200,
+    )
+
+
 @app.route("/api/stats/<country>")
 def stats(country):
     """
@@ -72,23 +88,3 @@ def stats(country):
         200,
     )
 
-
-@app.route("/api/stats/World")
-def worldStats():
-    """
-    get sum of all stats
-    """
-    last_date_df = df.sort_values(by="date").drop_duplicates(
-        subset="country", keep="last"
-    )
-    confirmed = sum(last_date_df.confirmed)
-    deaths = sum(last_date_df.deaths)
-    recovered = sum(last_date_df.recovered)
-    return (
-        {
-            "confirmed": int(confirmed),
-            "deaths": int(deaths),
-            "recovered": int(recovered),
-        },
-        200,
-    )

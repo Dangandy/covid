@@ -156,3 +156,4 @@ yarn-error.log*
 *env/
 *.csv
 *.pkl
+*.py.*.py
