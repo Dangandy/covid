@@ -178,8 +178,17 @@ class Model:
                 shuffle = True
         )
 
+<<<<<<< HEAD:backend/model.py
         # Export Model
         model.save("lstm_model.h5")
+=======
+    def preprocess_country(self) -> None:
+        dummies = pd.get_dummies(self.df.country)
+        dummies["country"] = self.df.country
+        dummies["date"] = self.df.date
+        df = pd.merge(self.df, dummies, on=["country", "date"])
+        self.df = df
+>>>>>>> 1c443407492bdc3a83b85286821ab2bcfaa24bb1:backend/model_lr.py
 
     def build_train_val_sets(self, metric) -> None:
         x, y = self.build_train_data(metric)
