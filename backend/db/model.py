@@ -17,8 +17,6 @@ class Stat(db.Model):
     confirmed = db.Column(db.Integer)
     deaths = db.Column(db.Integer)
     recovered = db.Column(db.Integer)
-
-    # predictions..
     confirmed_pred = db.Column(db.Integer)
     deaths_pred = db.Column(db.Integer)
     recovered_pred = db.Column(db.Integer)
