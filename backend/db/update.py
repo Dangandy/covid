@@ -2,50 +2,39 @@
 """
 Implementation of updating sqlite db
 """
-from datetime import datetime
-from model import db, Stat
-from create import Create
+from datetime import datetime, timedelta
+
+from create import Create, db, Stat
 
 
 class Update(Create):
     def transform(self, json: dict):
         # variables
         countries = json.keys()
-        all_data = []
-        last_days = []
+        update_data = []
 
-        # loop
+        # we only want to update everything from yesterday onwards..
+        update_day = datetime.now().date() + timedelta(days=-1)
+
+        # loop and build array of Stat
         for country in countries:
-
-            # build array of json
             for i, stat in enumerate(json[country]):
-                data = Stat(
-                    id=f"{country}{stat['date']}",
-                    country=country,
-                    date=datetime.strptime(stat["date"], "%Y-%m-%d").date(),
-                    confirmed=stat["confirmed"],
-                    deaths=stat["deaths"],
-                    recovered=stat["recovered"],
-                )
-                all_data.append(data)
+                date = datetime.strptime(stat["date"], "%Y-%m-%d").date()
 
-            # get today and yesterday's data
-            today = data
-            yesterday_stats = json[country][i - 1]
-            yesterday = Stat(
-                id=f"{country}{yesterday_stats['date']}",
-                country=country,
-                date=datetime.strptime(yesterday_stats["date"], "%Y-%m-%d").date(),
-                confirmed=yesterday_stats["confirmed"],
-                deaths=yesterday_stats["deaths"],
-                recovered=yesterday_stats["recovered"],
-            )
-
-            last_days.append(today)
-            last_days.append(yesterday)
+                if date >= update_day:
+                    update_data.append(
+                        Stat(
+                            id=f"{country}{stat['date']}",
+                            country=country,
+                            date=date,
+                            confirmed=stat["confirmed"],
+                            deaths=stat["deaths"],
+                            recovered=stat["recovered"],
+                        )
+                    )
 
         # return
-        return all_data, last_days
+        return update_data
 
     def load(self, data):
         """
@@ -73,10 +62,9 @@ def main():
     """
     update = Update()
     json = update.extract()
-    _, last_days = update.transform(json)
+    last_days = update.transform(json)
     update.load(last_days)
 
 
 if __name__ == "__main__":
     main()
-

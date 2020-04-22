@@ -20,9 +20,8 @@ win_size = 7
 def build_latest_set(df,  metric):
    # forecast_date = forecast_date.strftime("%Y-%m-%d")
     raw = df.query("date<'{0}'".format(forecast_date))
-    
     x = []
-  
+
     for country in countries:
         temp = raw[raw["country"]==country]
         series = temp[metric]
@@ -145,10 +144,3 @@ def stats(country):
         },
         200,
     )
-
-#if __name__ == "__main__":
-#    predict("Canada")
-
-
-
-
