@@ -157,3 +157,8 @@ yarn-error.log*
 *.csv
 *.pkl
 *.py.*.py
+
+# models and db
+site.db
+lstm_model.h5
+
