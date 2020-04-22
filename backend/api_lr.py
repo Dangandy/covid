@@ -5,7 +5,6 @@ import pandas as pd
 
 # start server
 app = Flask(__name__)
-app.debug = True
 model = pickle.load(open("model.pkl", "rb"))
 df = pd.read_csv("df.csv")
 

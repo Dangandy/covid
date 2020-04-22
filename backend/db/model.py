@@ -14,9 +14,9 @@ class Stat(db.Model):
     id = db.Column(db.String(120), primary_key=True)
     country = db.Column(db.String(100), unique=False, nullable=False)
     date = db.Column(db.Date, nullable=False)
-    confirmed = db.Column(db.Integer, nullable=False)
-    deaths = db.Column(db.Integer, nullable=False)
-    recovered = db.Column(db.Integer, nullable=False)
+    confirmed = db.Column(db.Integer)
+    deaths = db.Column(db.Integer)
+    recovered = db.Column(db.Integer)
 
     # predictions..
     confirmed_pred = db.Column(db.Integer)
