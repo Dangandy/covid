@@ -1,146 +1,88 @@
-# server stuff
+#!/usr/bin/env python3
+"""
+testing the implementation with the sqlite
+"""
+# 3rd party imports
 from flask import Flask
-from dateutil.relativedelta import relativedelta
-import pandas as pd
-import numpy as np
+from datetime import datetime, timedelta
 
-from keras.models import load_model
-
-
-# start server
-app = Flask(__name__)
-app.debug = True
-
-model = load_model("lstm_model.h5")
-df = pd.read_csv("df.csv", parse_dates=["date"])
-countries = list(df["country"].unique())
-forecast_date = df["date"].max()
-win_size = 7
-
-def build_latest_set(df,  metric):
-   # forecast_date = forecast_date.strftime("%Y-%m-%d")
-    raw = df.query("date<'{0}'".format(forecast_date))
-    x = []
-
-    for country in countries:
-        temp = raw[raw["country"]==country]
-        series = temp[metric]
-        x.append(series[len(series)-win_size:len(series)+1])
-    return np.array(x)
-
-def forecast(model, data, start_date, num_days, win_size=7):
-    result_=dict()
-    for i in range(len(data)):
-        result_[i]=[]
-    y_pred=model.predict(data)
-
-    dates=[]
-    #date_temp = pd.datetime.strptime(start_date, "%Y-%m-%d")
-    date_temp = start_date
-    for j in range(1,num_days+1):
-        for i in range(len(data)): # This loops for each country
-            cur_window=list(data[i][0][1:win_size+1])
-            result_[i].append(cur_window[-1])
-            cur_window.append(y_pred[i])
-            data[i][0]=cur_window
-        y_pred=model.predict(data)
-        dates.append(date_temp.strftime("%Y-%m-%d"))
-        date_temp+=relativedelta(days=1)
-    result=pd.DataFrame(pd.DataFrame(pd.DataFrame(result_).values.T)) 
-    result.columns=dates
-    result['country']=countries
-    return result
-
-def extract_country_predict(predict, metric, country):
-    temp = predict[predict["country"] == country]
-
-    temp = temp.drop(columns="country").T
-    temp.reset_index(inplace=True)
-    #Drop the first row
-    temp.drop([0], inplace=True)
-    #Rename column to metric
-    temp.columns = ["date", "prediction" ]
-    return temp
-
-
-@app.route("/api/predict/<country>")
-def predict(country):
-    """
-    predicts the countrys confirmed cases tomorrow.. country must be capital ☹️
-    """
-    metric = "confirmed"
-    latest = build_latest_set(df,  metric)
-
-    # Reshape for LSTM model
-    latest = latest.reshape(latest.shape[0], 1, 
-                            latest.shape[1])
-    #
-    # pred 5!!
-    forecast_set = forecast(model, latest, forecast_date, 5, win_size)
-    #print(forecast_set)
-    #Extract specific country
-    last_df = extract_country_predict(forecast_set, metric, country)
-    #last_df["date"] = pd.to_datetime(last_df["date"])
-    
-    #last_df.date_counter = last_df.date_counter.apply(lambda x: x + 10)
-    #X_test = last_df[X_columns]
-    """
-    results = [
-        {
-            "date": last_df.iloc[i, :]["date"],
-            "prediction": last_df.iloc[-1, :]["confirmed"] + sum(y_pred[: i + 1]),
-        }
-        for i, pred in enumerate(y_pred)
-    ]
-    """
-    results = last_df.to_dict(orient="records")
-   # print(results)
-    return {"results": results}, 200
-
-
-@app.route("/api/plot/<country>")
-def plot(country):
-    """
-    pulls all the date and confirmed from the df and return the data for that specific country
-    """
-    country_df = df[df.country == country]
-    dates = list(country_df["date"].astype(str))
-    confirmed = list(country_df["confirmed"].astype(int))
-
-    # build object
-    array = [{"date": dates[i], "confirmed": confirmed[i]} for i in range(len(dates))]
-    return {"results": array}, 200
-
-
-@app.route("/api/stats/World")
-def worldStats():
-    """
-    get sum of all stats
-    """
-    return (
-        {
-            "confirmed": int(sum(df.confirmed_diff)),
-            "deaths": int(sum(df.deaths_diff)),
-            "recovered": int(sum(df.recovered_diff)),
-        },
-        200,
-    )
+# local imports
+from db.model import db, Stat, app
 
 
 @app.route("/api/stats/<country>")
 def stats(country):
     """
-    grab the total confirmed, deaths, and recovered cases for the country
+    SQL Statement:
+        select * from stat where stat.confirmed is not null and stat.country = <country> order by stat.date desc limit 1;
     """
-    country_df = df[df.country == country]
-    confirmed = country_df["confirmed"].max()
-    deaths = country_df["deaths"].max()
-    recovered = country_df["recovered"].max()
+    # search db
+    result = (
+        Stat.query.filter(Stat.confirmed != None, Stat.country == country)
+        .order_by(Stat.date.desc())
+        .first()
+    )
+
+    # return
     return (
         {
-            "confirmed": int(confirmed),
-            "deaths": int(deaths),
-            "recovered": int(recovered),
+            "confirmed": result.confirmed,
+            "deaths": result.deaths,
+            "recovered": result.recovered,
         },
         200,
     )
+
+
+@app.route("/api/stats/World")
+def worldStats():
+    """
+    grab all records from today ( or latest record.. )
+    """
+    # search db
+    confirmed, recovered, deaths = (
+        db.session.query(
+            db.func.sum(Stat.confirmed),
+            db.func.sum(Stat.recovered),
+            db.func.sum(Stat.deaths),
+        )
+        .filter(Stat.confirmed != None)
+        .order_by(Stat.date.desc())
+        .limit(1)
+        .first()
+    )
+
+    # return
+    return {"confirmed": confirmed, "recovered": recovered, "deaths": deaths}, 200
+
+
+@app.route("/api/plot/<country>")
+def history(country):
+    """
+    pull all historic data on country
+    """
+    # varialbes
+    array = []
+
+    # use filter to get all data
+    result = Stat.query.filter_by(country=country).all()
+
+    # build array
+    for record in result:
+        array.append(
+            {
+                "confirmed": record.confirmed,
+                "date": record.date,
+                "recovered": record.recovered,
+                "deaths": record.deaths,
+                "confirmed_pred": record.confirmed_pred,
+            }
+        )
+
+    # return
+    return {"result": array}, 200
+
+
+if __name__ == "__main__":
+    # app.debug = True
+    app.run()
