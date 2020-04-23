@@ -198,7 +198,6 @@ const MyComponent = () => {
 
   return (
     <>
-      <h3>{country} Stats</h3>
       <select
         defaultValue={country}
         onChange={(e) => {

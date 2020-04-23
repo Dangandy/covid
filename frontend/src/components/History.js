@@ -18,26 +18,12 @@ export default function History({ country }) {
         },
       })
         .then((res) => res.json())
-        .then((d) => {
-          setHistory(d); // res.json() returns a promise.. so.. another then
-        })
-        .catch((err) => console.log(err));
-    }
-    fetchHistory();
-  }, [country]);
-
-  useEffect(() => {
-    async function fetchHistory() {
-      console.log("fetching prediction");
-      await fetch(`/api/predict/${country}`, {
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-      })
-        .then((res) => res.json())
-        .then((d) => {
-          setPrediction(d); // res.json() returns a promise.. so.. another then
+        .then(({ result }) => {
+          console.log("retrieved plot info");
+          const hist = result.filter((res) => res.confirmed);
+          const pred = result.filter((res) => res.confirmed_pred);
+          setHistory(hist); // res.json() returns a promise.. so.. another then
+          setPrediction(pred);
         })
         .catch((err) => console.log(err));
     }
@@ -49,20 +35,18 @@ export default function History({ country }) {
       console.log("Making d3 plot");
       const height = 420;
       const width = 720;
-      const margin = { top: 20, right: 30, bottom: 30, left: 40 };
+      const margin = { top: 20, right: 30, bottom: 50, left: 50 };
       // change date
-      let { results: data } = history;
-      data = data.map(({ date, confirmed }) => {
+      let data = history.map(({ date, confirmed }) => {
         return {
           date: new Date(date),
           value: confirmed,
         };
       });
 
-      let { results: pred } = prediction;
-      pred = pred.map(({ date, prediction }) => ({
+      let pred = prediction.map(({ date, confirmed_pred }) => ({
         date: new Date(date),
-        value: prediction,
+        value: confirmed_pred,
       }));
 
       // add data and pred together to get full size..
@@ -80,27 +64,21 @@ export default function History({ country }) {
         .range([height - margin.bottom, margin.top]);
 
       const xAxis = (g) =>
-        g.attr("transform", `translate(0,${height - margin.bottom})`).call(
-          d3
-            .axisBottom(x)
-            .ticks(width / 80)
-            .tickSizeOuter(0)
-        );
+        g
+          .attr("transform", `translate(0,${height - margin.bottom})`)
+          .call(
+            d3
+              .axisBottom(x)
+              .ticks(width / 80)
+              .tickSizeOuter(0)
+          )
+          .call((g) => g.select(".domain").remove());
 
       const yAxis = (g) =>
         g
           .attr("transform", `translate(${margin.left},0)`)
           .call(d3.axisLeft(y))
-          .call((g) => g.select(".domain").remove())
-          .call((g) =>
-            g
-              .select(".tick:last-of-type text")
-              .clone()
-              .attr("x", 3)
-              .attr("text-anchor", "start")
-              .attr("font-weight", "bold")
-              .text("Confirmed Cases")
-          );
+          .call((g) => g.select(".domain").remove());
 
       const line = d3
         .line()
@@ -108,16 +86,22 @@ export default function History({ country }) {
         .x((d) => x(d.date))
         .y((d) => y(d.value));
 
-      const pLine = d3
-        .line()
-        .defined((d) => !isNaN(d.value))
-        .x((d) => x(d.date))
-        .y((d) => y(d.value));
+      // Define the div for the tooltip
+      var tooltip = d3
+        .select("body")
+        .append("div")
+        .attr("class", "tooltip")
+        .style("position", "absolute")
+        .style("z-index", "10")
+        .style("visibility", "hidden")
+        .style("background", "azure");
+      var formatTime = d3.timeFormat("%B %e");
 
       const svg = d3.select(canvas.current);
 
       svg.selectAll("path").remove();
       svg.selectAll("g").remove();
+      svg.selectAll("text").remove();
 
       svg
         .attr("width", width)
@@ -126,7 +110,18 @@ export default function History({ country }) {
         .style("overflow", "visible");
 
       svg.append("g").call(xAxis);
+      svg
+        .append("text")
+        .attr("text-anchor", "middle") // this makes it easy to centre the text as the transform is applied to the anchor
+        .attr("transform", "translate(" + width / 2 + "," + height + ")") // centre below axis
+        .text("Date");
+
       svg.append("g").call(yAxis);
+      svg
+        .append("text")
+        .attr("text-anchor", "middle") // this makes it easy to centre the text as the transform is applied to the anchor
+        .attr("transform", "translate(0," + height / 2 + ")rotate(-90)") // text is drawn off the screen top left, move down and out and rotate
+        .text("# Confirmed Cases");
       svg
         .append("path")
         .datum(data)
@@ -138,14 +133,59 @@ export default function History({ country }) {
         .attr("d", line);
 
       svg
-        .append("path")
-        .datum(pred)
-        .attr("fill", "none")
-        .attr("stroke", "tomato")
-        .attr("stroke-width", 1.5)
-        .attr("stroke-linejoin", "round")
-        .attr("stroke-linecap", "round")
-        .attr("d", pLine);
+        .append("g")
+        .selectAll("dot")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("cx", function (d) {
+          return x(d.date);
+        })
+        .attr("cy", function (d) {
+          return y(d.value);
+        })
+        .attr("r", 3)
+        .attr("fill", "steelblue")
+        .on("mouseover", function (d) {
+          return tooltip.style("visibility", "visible");
+        })
+        .on("mousemove", function (d) {
+          return tooltip
+            .html(formatTime(d.date) + "<br/>Cases: " + d.value)
+            .style("top", d3.event.pageY - 10 + "px")
+            .style("left", d3.event.pageX + 10 + "px");
+        })
+        .on("mouseout", function () {
+          return tooltip.style("visibility", "hidden");
+        });
+
+      // Add the points
+      svg
+        .append("g")
+        .selectAll("dot")
+        .data(pred)
+        .enter()
+        .append("circle")
+        .attr("cx", function (d) {
+          return x(d.date);
+        })
+        .attr("cy", function (d) {
+          return y(d.value);
+        })
+        .attr("r", 3)
+        .attr("fill", "tomato")
+        .on("mouseover", function (d) {
+          return tooltip.style("visibility", "visible");
+        })
+        .on("mousemove", function (d) {
+          return tooltip
+            .html(formatTime(d.date) + "<br/>Prediction: " + d.value)
+            .style("top", d3.event.pageY - 10 + "px")
+            .style("left", d3.event.pageX + 10 + "px");
+        })
+        .on("mouseout", function () {
+          return tooltip.style("visibility", "hidden");
+        });
     }
   }, [history, prediction]);
 

@@ -9,6 +9,7 @@ import StatsBlock from "./StatsBlock";
 const Section = styled.div`
   display: inline-grid;
   grid-template-columns: 1fr 1fr 1fr;
+  min-width: 800px;
 `;
 
 export default function Stats({ country }) {
@@ -25,7 +26,6 @@ export default function Stats({ country }) {
       })
         .then((res) => res.json())
         .then((d) => {
-          console.log(d);
           setLoading(false);
           setStats(d);
         })
@@ -35,24 +35,11 @@ export default function Stats({ country }) {
   }, [country]);
   if (loading) return <p>loading..</p>;
   if (error) return <p>error..</p>;
-  console.log(stats, loading, error);
   return (
     <Section>
-      <StatsBlock
-        type="Confirmed"
-        cur={stats ? stats.confirmed : 0}
-        prev={stats ? stats.confirmed : 0}
-      />
-      <StatsBlock
-        type="Deaths"
-        cur={stats ? stats.deaths : 0}
-        prev={stats ? stats.deaths : 0}
-      />
-      <StatsBlock
-        type="Recovered"
-        cur={stats ? stats.recovered : 0}
-        prev={stats ? stats.recovered : 0}
-      />
+      <StatsBlock type="Confirmed" cur={stats ? stats.confirmed : 0} />
+      <StatsBlock type="Recovered" cur={stats ? stats.recovered : 0} />
+      <StatsBlock type="Deaths" cur={stats ? stats.deaths : 0} />
     </Section>
   );
 }

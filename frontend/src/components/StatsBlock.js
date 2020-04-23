@@ -1,53 +1,50 @@
 // imports
 import React, { useState, useEffect } from "react";
-import styled, { keyframes } from "styled-components";
+import styled from "styled-components";
 
 // styled components
 const Block = styled.div`
-  padding: 0.5em;
-  margin: 0.5em;
+  padding: 0.25em;
+  margin: 0.25em;
   color: dimgray;
-  background: ${(props) => props.blockColor};
   border: none;
-  border-radius: 12px;
   font-size: 1em;
-  display: flex;
+  display: grid;
   grid-template-rows: 1fr;
   justify-content: center;
   align-items: center;
-  border: 1px solid dimgray;
 `;
 
-const fadeIn = keyframes`
-0% {
-opacity: 0;
-}
-100% {
-opacity: 1;
-}
+const Number = styled.span`
+  color: ${(props) => (props.type ? props.type : "palevioletred")};
+  font-size: 2em;
 `;
 
-const Flash = styled.span`
-  animation: ${fadeIn} 2s ease-out infinite;
-`;
-
-export default function StatsBlock({ type, cur, prev }) {
+export default function StatsBlock({ type, cur }) {
   // states
-  const [direction, setDirection] = useState("snow");
+  const [direction, setDirection] = useState("dimgray");
+  const [value, setValue] = useState(0);
 
   useEffect(() => {
-    if (cur > prev) {
-      setDirection("mistyrose");
-    } else if (cur < prev) {
-      setDirection("honeydew");
+    let formatValue = cur.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    setValue(formatValue);
+  }, [cur]);
+
+  useEffect(() => {
+    if (type === "Confirmed") {
+      setDirection("palevioletred");
+    } else if (type === "Recovered") {
+      setDirection("palegreen");
+    } else {
+      setDirection("dimgray");
     }
-  }, [cur, prev]);
+  }, [cur, type]);
 
   // return
   return (
-    <Block blockColor={direction}>
-      <span>{`${type}: `}</span>
-      <Flash>{cur}</Flash>
+    <Block>
+      <Number type={direction}>{value}</Number>
+      <span>{`${type}`}</span>
     </Block>
   );
 }
