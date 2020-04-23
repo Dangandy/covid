@@ -132,7 +132,6 @@ def main():
     # Set random state for Keras
     np.random.seed(42)
     rn.seed(12345)
-    tf.random.set_seed(1234)
 
     # build model and save it
     model = Lstm()
