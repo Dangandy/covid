@@ -24,7 +24,7 @@ class Update(Create):
                 if date >= update_day:
                     update_data.append(
                         Stat(
-                            id=f"{country}{stat['date']}",
+                            id=f"{country}{date}",
                             country=country,
                             date=date,
                             confirmed=stat["confirmed"],
