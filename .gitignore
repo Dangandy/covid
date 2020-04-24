@@ -162,3 +162,5 @@ yarn-error.log*
 site.db
 lstm_model.h5
 
+# airflow
+logs/
