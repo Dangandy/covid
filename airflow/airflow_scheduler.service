@@ -1,0 +1,15 @@
+[Unit]
+Description=Airflow scheduler daemon
+After=network.target postgresql.service mysql.service redis.service rabbitmq-server.service
+Wants=postgresql.service mysql.service redis.service rabbitmq-server.service
+
+[Service]
+Environment="PATH=/home/andy/covid/backend/covidenv/bin/"
+User=andy
+Type=simple
+ExecStart=/home/andy/covid/backend/covidenv/bin/airflow scheduler
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
