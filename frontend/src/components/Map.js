@@ -254,7 +254,7 @@ const MapChart = ({ max, setTooltipContent, data }) => {
                           <span>Recovered: {d.recovered}</span>
                           <span>Deaths: {d.deaths}</span>
                           {d.confirmed_pred ? (
-                            <span>Predicted Cases: d.confirmed_pred</span>
+                            <span>Predicted Cases: {d.confirmed_pred}</span>
                           ) : (
                             ""
                           )}
