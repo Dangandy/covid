@@ -14,7 +14,7 @@ class Update(Create):
         update_data = []
 
         # we only want to update everything from yesterday onwards..
-        update_day = datetime.now().date() + timedelta(days=-1)
+        update_day = datetime.now().date() + timedelta(days=-7)
 
         # loop and build array of Stat
         for country in countries:

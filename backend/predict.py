@@ -11,21 +11,19 @@ import collections
 # local import
 from db.model import db, Stat
 
+DELTA = 8
+today = datetime.now().date()
+start_date = today + timedelta(days=-DELTA)
+
 
 class Predict:
-    def __init__(self):
-        # start date is 7 days ago
-        self.today = datetime.now().date()
-        self.start_date = self.today + timedelta(days=-7)
-
     def get_data(self):
         """
         get last "7" days of data
+        - this will break if api has not updated
         """
         # get all prediction of country
-        result = Stat.query.filter(
-            Stat.date >= self.start_date, Stat.date < self.today
-        ).all()
+        result = Stat.query.filter(Stat.date >= start_date, Stat.date < today).all()
 
         # create a map for each country and their 7 latest record
         memo = collections.defaultdict(list)
@@ -47,7 +45,7 @@ class Predict:
 
         # predict - we'll be shifting x every iteration because predict output 1 value
         for i in range(7):
-            _X = np.array([x[i : 7 + i] for [x] in X])
+            _X = np.array([x[-7:] for [x] in X])
             _X = _X.reshape(_X.shape[0], 1, _X.shape[1])
             y_pred = model.predict(_X)
 
@@ -56,10 +54,11 @@ class Predict:
             X = X.reshape(X.shape[0], 1, X.shape[1])
 
         # add predictions into database..
-        y_pred = [x[7:14] for [x] in X]
+        y_pred = [x[-7:] for [x] in X]
+        total_preds = len(X[0][0])
         for country, prediction in zip(countries, y_pred):
             for i, pred in enumerate(prediction):
-                pred_date = self.today + timedelta(days=i)
+                pred_date = start_date + timedelta(days=total_preds - 7 + i)
                 data.append(
                     Stat(
                         id=f"{country}{pred_date}",

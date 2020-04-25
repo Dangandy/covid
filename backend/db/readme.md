@@ -9,10 +9,13 @@
 ```bash
 pip install -r requirements.txt 
 python create.py  			# if you don't have site.db present
+
+# on an hourly basis ( currently using airflow )
+python update.py
 ```
 - a sandbox example has been provided in sample
 
 ## To Do:
-- [] impletement: sqlite 
-- [] airflow to build model and restart nginx
-- [] test cases
+-[X] impletement: sqlite 
+-[X] airflow 
+-[] test cases
