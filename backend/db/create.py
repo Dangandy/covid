@@ -1,9 +1,10 @@
 # 3rd party imports
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 
 # local imports
 from model import db, Stat
+
 
 class Create:
     def __init__(self):
@@ -28,10 +29,12 @@ class Create:
 
             # build array of json
             for i, stat in enumerate(json[country]):
+
+                date = datetime.strptime(stat["date"], "%Y-%m-%d").date()
                 data = Stat(
-                    id=f"{country}{stat['date']}",
+                    id=f"{country}{date}",
                     country=country,
-                    date=datetime.strptime(stat["date"], "%Y-%m-%d").date(),
+                    date=date,
                     confirmed=stat["confirmed"],
                     deaths=stat["deaths"],
                     recovered=stat["recovered"],

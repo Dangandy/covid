@@ -38,16 +38,20 @@ export default function History({ country }) {
       const margin = { top: 20, right: 30, bottom: 50, left: 50 };
       // change date
       let data = history.map(({ date, confirmed }) => {
+        const d = new Date(date);
         return {
-          date: new Date(date),
+          date: d.setHours(d.getHours() + 4),
           value: confirmed,
         };
       });
 
-      let pred = prediction.map(({ date, confirmed_pred }) => ({
-        date: new Date(date),
-        value: confirmed_pred,
-      }));
+      let pred = prediction.map(({ date, confirmed_pred }) => {
+        const d = new Date(date);
+        return {
+          date: d.setHours(d.getHours() + 4),
+          value: confirmed_pred,
+        };
+      });
 
       // add data and pred together to get full size..
       const combine = [...data, ...pred];
