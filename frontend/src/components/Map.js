@@ -1,3 +1,4 @@
+// 3rd party exports
 import React, { useMemo, memo } from "react";
 import { scalePow } from "d3-scale";
 import {
@@ -9,6 +10,10 @@ import {
 } from "react-simple-maps";
 import styled from "styled-components";
 
+// local imports
+import formatNumber from "../utils/utils";
+
+// variables
 const geoUrl =
   "https://raw.githubusercontent.com/zcreativelabs/react-simple-maps/master/topojson-maps/world-110m.json";
 
@@ -24,6 +29,10 @@ const ToolTip = styled.div`
 const Title = styled.span`
   font-size: 1.25rem;
   font-weight: 600;
+`;
+
+const Tip = styled.small`
+  margin: 0;
 `;
 
 const isoMap = {
@@ -226,7 +235,7 @@ const MapChart = ({ max, setTooltipContent, data }) => {
     <>
       <ComposableMap
         data-tip=""
-        height={500}
+        height={400}
         projectionConfig={{
           scale: 150,
         }}
@@ -250,11 +259,13 @@ const MapChart = ({ max, setTooltipContent, data }) => {
                       setTooltipContent(
                         <ToolTip>
                           <Title>{d.country}</Title>
-                          <span>Confirmed: {d.confirmed}</span>
-                          <span>Recovered: {d.recovered}</span>
-                          <span>Deaths: {d.deaths}</span>
+                          <span>Confirmed: {formatNumber(d.confirmed)}</span>
+                          <span>Recovered: {formatNumber(d.recovered)}</span>
+                          <span>Deaths: {formatNumber(d.deaths)}</span>
                           {d.confirmed_pred ? (
-                            <span>Predicted Cases: {d.confirmed_pred}</span>
+                            <span>
+                              Predicted Cases: {formatNumber(d.confirmed_pred)}
+                            </span>
                           ) : (
                             ""
                           )}
@@ -283,6 +294,7 @@ const MapChart = ({ max, setTooltipContent, data }) => {
           }
         </Geographies>
       </ComposableMap>
+      <Tip>Hover for details</Tip>
     </>
   );
 };
