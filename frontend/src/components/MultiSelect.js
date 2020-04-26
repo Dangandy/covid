@@ -1,9 +1,18 @@
 // imports
 import React, { useState } from "react";
+import styled from "styled-components";
 
 // local
 import Stats from "./Stats";
 import History from "./History";
+
+// Styles
+const Wrapper = styled.div`
+  grid-gap: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+`;
 
 // component
 const MyComponent = () => {
@@ -197,7 +206,7 @@ const MyComponent = () => {
   const [country, setCountry] = useState("Canada");
 
   return (
-    <>
+    <Wrapper>
       <select
         defaultValue={country}
         onChange={(e) => {
@@ -211,9 +220,10 @@ const MyComponent = () => {
         ))}
       </select>
       <Stats country={country} />
-      <h3>History & prediction</h3>
+      <h4>History & prediction</h4>
       <History country={country} />
-    </>
+      <small>Hover for details</small>
+    </Wrapper>
   );
 };
 

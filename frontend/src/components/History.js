@@ -1,6 +1,9 @@
-// imports
+// 3rd party imports
 import React, { useState, useEffect, useRef } from "react";
 import * as d3 from "d3";
+
+// local imports
+import formatNumber from "../utils/utils";
 
 // Components
 export default function History({ country }) {
@@ -33,7 +36,7 @@ export default function History({ country }) {
   useEffect(() => {
     if (history && prediction) {
       console.log("Making d3 plot");
-      const height = 420;
+      const height = 400;
       const width = 720;
       const margin = { top: 20, right: 30, bottom: 50, left: 50 };
       // change date
@@ -117,7 +120,7 @@ export default function History({ country }) {
       svg
         .append("text")
         .attr("text-anchor", "middle") // this makes it easy to centre the text as the transform is applied to the anchor
-        .attr("transform", "translate(" + width / 2 + "," + height + ")") // centre below axis
+        .attr("transform", `translate(${width / 2 + 40},${height - 15})`) // centre below axis
         .text("Date");
 
       svg.append("g").call(yAxis);
@@ -155,7 +158,7 @@ export default function History({ country }) {
         })
         .on("mousemove", function (d) {
           return tooltip
-            .html(formatTime(d.date) + "<br/>Cases: " + d.value)
+            .html(formatTime(d.date) + "<br/>Cases: " + formatNumber(d.value))
             .style("top", d3.event.pageY - 10 + "px")
             .style("left", d3.event.pageX + 10 + "px");
         })
@@ -183,7 +186,9 @@ export default function History({ country }) {
         })
         .on("mousemove", function (d) {
           return tooltip
-            .html(formatTime(d.date) + "<br/>Prediction: " + d.value)
+            .html(
+              formatTime(d.date) + "<br/>Prediction: " + formatNumber(d.value)
+            )
             .style("top", d3.event.pageY - 10 + "px")
             .style("left", d3.event.pageX + 10 + "px");
         })

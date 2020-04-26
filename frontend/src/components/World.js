@@ -13,6 +13,7 @@ const Wrapper = styled.div`
   padding: 0;
 `;
 
+
 const MyComponent = () => {
   const [content, setContent] = useState("");
   const [data, setData] = useState([]);

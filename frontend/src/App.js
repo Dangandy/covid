@@ -6,6 +6,7 @@ import styled, { createGlobalStyle, keyframes } from "styled-components";
 import logo from "./virus.svg";
 import MultiSelect from "./components/MultiSelect";
 import World from "./components/World";
+import Footer from "./components/Footer";
 
 // styles
 const GlobalStyle = createGlobalStyle`
@@ -99,6 +100,7 @@ function App() {
           <img src={logo} alt="cv19" width="100px" height="100px" />
         </Header>
         <TabGroup />
+        <Footer />
       </Wrapper>
     </>
   );

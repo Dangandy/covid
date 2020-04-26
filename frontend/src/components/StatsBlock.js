@@ -2,6 +2,9 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 
+// local
+import formatNumber from "../utils/utils";
+
 // styled components
 const Block = styled.div`
   padding: 0.25em;
@@ -26,8 +29,7 @@ export default function StatsBlock({ type, cur }) {
   const [value, setValue] = useState(0);
 
   useEffect(() => {
-    let formatValue = cur.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    setValue(formatValue);
+    setValue(formatNumber(cur));
   }, [cur]);
 
   useEffect(() => {
