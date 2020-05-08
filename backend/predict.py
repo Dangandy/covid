@@ -6,12 +6,14 @@ Predict upcoming confirmed cases using LSTM model
 from keras.models import load_model
 import numpy as np
 from datetime import datetime, timedelta
+import pandas as pd
 import collections
 
 # local import
 from db.model import db, Stat
 
-DELTA = 8
+# global variables?
+DELTA = 10
 today = datetime.now().date()
 start_date = today + timedelta(days=-DELTA)
 
@@ -19,29 +21,41 @@ start_date = today + timedelta(days=-DELTA)
 class Predict:
     def get_data(self):
         """
-        get last "7" days of data
-        - this will break if api has not updated
+        get last "7" days of data by storing sql statement into dataframe and transforming it
         """
         # get all prediction of country
-        result = Stat.query.filter(Stat.date >= start_date, Stat.date < today).all()
+        df = pd.read_sql(
+            Stat.query.filter(Stat.date >= start_date, Stat.date < today).statement,
+            db.session.bind,
+        )
 
-        # create a map for each country and their 7 latest record
-        memo = collections.defaultdict(list)
-        for stat in result:
-            memo[stat.country].append(stat.confirmed)
+        # transform df
+        df.sort_values(by=["country", "date"], inplace=True)
+        df["confirmed_diff"] = np.where(
+            df.country == df.country.shift(), df.confirmed - df.confirmed.shift(), 0
+        )
+        last7_df = df.groupby("country").tail(7)
+        last1_df = df.groupby("country").tail(1)
+
+        # get key variables from df
+        num_countries = df.country.nunique()
+        X = np.array(last7_df.confirmed_diff)
+        X = X.reshape(num_countries, 1, 7)
+
+        countries = last1_df.country
+        confirmed = last1_df.confirmed
+        last_date = max(last1_df.date)
 
         # return
-        countries = memo.keys()
-        X = np.array([memo[country] for country in countries])
-        X = X.reshape(X.shape[0], 1, X.shape[1])
-        return countries, X
+        return X, countries, confirmed, last_date
 
-    def predict(self, countries, X, model):
+    def predict(self, X, countries, confirmed, last_date, model):
         """
         predict, then predict again
         """
         # variables
         data = []
+        countries_zip = zip(countries, confirmed)
 
         # predict - we'll be shifting x every iteration because predict output 1 value
         for i in range(7):
@@ -55,16 +69,17 @@ class Predict:
 
         # add predictions into database..
         y_pred = [x[-7:] for [x] in X]
-        total_preds = len(X[0][0])
-        for country, prediction in zip(countries, y_pred):
+        for (country, confirm), prediction in zip(countries_zip, y_pred):
+            total = confirm
             for i, pred in enumerate(prediction):
-                pred_date = start_date + timedelta(days=total_preds - 7 + i)
+                total += pred
+                pred_date = last_date + timedelta(days=i + 1)
                 data.append(
                     Stat(
                         id=f"{country}{pred_date}",
                         country=country,
                         date=pred_date,
-                        confirmed_pred=int(pred),
+                        confirmed_pred=int(total),
                     )
                 )
 
@@ -79,15 +94,8 @@ class Predict:
         for stat in data:
             query = Stat.query.get({"id": stat.id})
             if query:
-                query.confirmed = stat.confirmed
-                query.deaths = stat.deaths
-                query.recovered = stat.recovered
                 query.confirmed_pred = (
                     stat.confirmed_pred if stat.confirmed_pred else None
-                )
-                query.deaths_pred = stat.deaths_pred if stat.deaths_pred else None
-                query.recovered_pred = (
-                    stat.recovered_pred if stat.recovered_pred else None
                 )
             else:
                 db.session.add(stat)
@@ -105,8 +113,8 @@ def main():
 
     # load model
     lstm = load_model("lstm_model.h5")
-    countries, X = predict.get_data()
-    data = predict.predict(countries, X, lstm)
+    X, countries, confirmed, last_date = predict.get_data()
+    data = predict.predict(X, countries, confirmed, last_date, lstm)
 
     # save to db
     predict.load(data)

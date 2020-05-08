@@ -61,8 +61,8 @@ class Lstm:
         df: pd.DataFrame,
         metric="confirmed",
         win_size=7,
-        epochs=5,
-        batch_size=32,
+        epochs=8,
+        batch_size=16,
         save=False,
     ) -> Sequential:
         """
@@ -92,6 +92,10 @@ class Lstm:
         # preprocess
         X_train = X_train.reshape(X_train.shape[0], 1, X_train.shape[1])
         X_val = X_val.reshape(X_val.shape[0], 1, X_val.shape[1])
+
+        # normalize data
+        X_train = tf.keras.utils.normalize(X_train, axis=-1, order=2)
+        X_val = tf.keras.utils.normalize(X_val, axis=-1, order=2)
 
         # build model
         model = Sequential()
@@ -132,12 +136,15 @@ def main():
     # Set random state for Keras
     np.random.seed(42)
     rn.seed(12345)
+    tf.compat.v1.random.set_random_seed(42)
+    configuration = tf.compat.v1.ConfigProto(device_count={"GPU": 0})
+    session = tf.compat.v1.Session(config=configuration)
 
     # build model and save it
     model = Lstm()
     df = model.extract()
     df = model.transform(df)
-    lstm = model.load(df, save=True)
+    lstm = model.load(df, save=True, metric='confirmed_diff', epochs=8)
 
 
 if __name__ == "__main__":
